@@ -1,0 +1,74 @@
+@model string[]
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Request Form</title>
+</head>
+<body>
+    <h1>API Request Form</h1>
+
+    <form asp-controller="APIRequest" asp-action="SendAPIRequest" method="post">
+        <label for="apiEndpoint">API Endpoint:</label>
+        <select name="apiEndpoint" id="apiEndpoint">
+            @foreach (string endpoint in Model)
+            {
+                <option value="@endpoint">@endpoint</option>
+            }
+        </select>
+        <br>
+        <label for="apiRequest">API Request:</label>
+        <br>
+        <textarea name="apiRequest" id="apiRequest" rows="10" cols="50"></textarea>
+        <br>
+        <button type="submit">Send Request</button>
+    </form>
+</body>
+</html>
+
+@using System;
+@using System.IO;
+@using System.Net.Http;
+@using System.Text;
+@using Microsoft.AspNetCore.Mvc;
+@using Microsoft.AspNetCore.Http;
+
+namespace APIRequestController
+{
+    public class APIRequestController : Controller
+    {
+        private const string API_ENDPOINTS_FILE = "apiEndpoints.txt";
+
+        public IActionResult Index()
+        {
+            // Load API endpoints from file
+            string[] apiEndpoints = System.IO.File.ReadAllLines(API_ENDPOINTS_FILE);
+
+            return View(apiEndpoints);
+        }
+
+        [HttpPost]
+        public IActionResult SendAPIRequest(string apiEndpoint, string apiRequest)
+        {
+            try
+            {
+                // Send API request
+                HttpClient client = new HttpClient();
+                HttpResponseMessage response = client.PostAsync(apiEndpoint, new StringContent(apiRequest, Encoding.UTF8, "application/json")).Result;
+
+                // Get response content
+                string responseContent = response.Content.ReadAsStringAsync().Result;
+
+                return Ok(responseContent);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+    }
+}
