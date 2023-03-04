@@ -1,0 +1,98 @@
+@page
+@model dynamic
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Request Form</title>
+</head>
+<body>
+    @if (IsPost)
+    {
+        string apiEndpoint = Request.Form["apiEndpoint"];
+        string apiRequest = Request.Form["apiRequest"];
+        string cookieValue = Request.Form["cookieValue"];
+
+        try
+        {
+            // Send initial API request with cookie
+            HttpClient client = new HttpClient();
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, apiEndpoint);
+            request.Content = new StringContent(apiRequest, Encoding.UTF8, "application/json");
+            request.Headers.Add("Cookie", $"mycookie={cookieValue}");
+            HttpResponseMessage initialResponse = client.SendAsync(request).Result;
+
+            // Get initial response content
+            string initialResponseContent = initialResponse.Content.ReadAsStringAsync().Result;
+
+            // Show initial response content and form for editing the request
+            <h2>Initial Response Content:</h2>
+            <pre>@initialResponseContent</pre>
+
+            <h2>Edit API Request:</h2>
+            <form method="post">
+                <input type="hidden" name="apiEndpoint" value="@apiEndpoint" />
+                <input type="hidden" name="cookieValue" value="@cookieValue" />
+                <label for="apiRequest">API Request:</label>
+                <br>
+                <textarea name="apiRequest" id="apiRequest" rows="10" cols="50">@apiRequest</textarea>
+                <br>
+                <input type="submit" value="Send Request" />
+            </form>
+        }
+        catch (Exception e)
+        {
+            <p>Error sending API request: @e.Message</p>
+        }
+    }
+    else
+    {
+        // Load API endpoints from file
+        string[] apiEndpoints = System.IO.File.ReadAllLines("apiEndpoints.txt");
+
+        <h1>API Request Form</h1>
+
+        <form method="post">
+            <label for="apiEndpoint">API Endpoint:</label>
+            <select name="apiEndpoint" id="apiEndpoint">
+                @foreach (string endpoint in apiEndpoints)
+                {
+                    <option value="@endpoint">@endpoint</option>
+                }
+            </select>
+            <br>
+            <label for="apiRequest">API Request:</label>
+            <br>
+            <textarea name="apiRequest" id="apiRequest" rows="10" cols="50"></textarea>
+            <br>
+            <label for="cookieValue">Cookie:</label>
+            <br>
+            <input type="text" name="cookieValue" id="cookieValue" />
+            <br>
+            <input type="submit" value="Send Request" />
+        </form>
+    }
+
+    @if (IsPost && Request.Form["apiEndpoint"] != null && Request.Form["apiRequest"] != null)
+    {
+        string apiEndpoint = Request.Form["apiEndpoint"];
+        string apiRequest = Request.Form["apiRequest"];
+        string cookieValue = Request.Form["cookieValue"];
+
+        try
+        {
+            // Send edited API request with cookie
+            HttpClient client = new HttpClient();
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, apiEndpoint);
+            request.Content = new StringContent(apiRequest, Encoding.UTF8, "application/json");
+            request.Headers.Add("Cookie", $"mycookie={cookieValue}");
+            HttpResponseMessage response = client.SendAsync(request).Result;
+
+            // Get response content
+            string responseContent = response.Content.ReadAsStringAsync().Result;
+
+            <h2>Final Response Content
